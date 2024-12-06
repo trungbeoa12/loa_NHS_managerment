@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Order</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <h1>Edit Order</h1>
+    <form method="POST" action="/edit/{{ order.id }}">
+        <label for="customer">Customer:</label>
+        <input type="text" id="customer" name="customer" value="{{ order.customer }}" required>
+        <br>
+        <label for="product">Product:</label>
+        <input type="text" id="product" name="product" value="{{ order.product }}" required>
+        <br>
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+            <option value="Delivered" {% if order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+        </select>
+        <br><br>
+        <button type="submit">Save Changes</button>
+    </form>
+    <br>
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>
+

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Order</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <h1>Create New Order</h1>
+    <form method="POST" action="/create">
+        <label for="customer">Customer:</label>
+        <input type="text" id="customer" name="customer" required>
+        <br>
+        <label for="product">Product:</label>
+        <input type="text" id="product" name="product" required>
+        <br>
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="Pending">Pending</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+        </select>
+        <br><br>
+        <button type="submit">Create Order</button>
+    </form>
+    <br>
+    <a href="/dashboard">Back to Dashboard</a>
+</body>
+</html>
+
