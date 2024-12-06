@@ -3,23 +3,14 @@ import sqlite3
 
 # Hàm kết nối cơ sở dữ liệu
 def get_db_connection():
-    try:
-        conn = sqlite3.connect('database/orders.db')
-        conn.row_factory = sqlite3.Row  # Trả về dữ liệu dạng dictionary
-        return conn
-    except sqlite3.Error as e:
-        print(f"Database connection error: {e}")
-        return None
+    conn = sqlite3.connect('/home/trungdt2/Thuchanh/website-datloa/database/orders.db')
+    conn.row_factory = sqlite3.Row  # Trả về dữ liệu dạng dictionary
+    return conn
+
 
 # Khởi tạo ứng dụng Flask
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
-
-# Danh sách người dùng mẫu
-users = {
-    "branch1": {"password": "password123", "role": "Branch User"},
-    "admin1": {"password": "admin123", "role": "Regional Admin"},
-}
 
 # Route trang chủ: Hiển thị form đăng nhập
 @app.route('/')
@@ -35,56 +26,81 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        user = users.get(username)
-        if user and user['password'] == password:
-            session['username'] = username
-            session['role'] = user['role']
-            return redirect(url_for('dashboard'))
+        conn = get_db_connection()
+        
+        # Kiểm tra trong bảng branch_users
+        branch_user = conn.execute(
+            'SELECT * FROM branch_users WHERE branch_code = ? AND password = ?',
+            (username, password)
+        ).fetchone()
 
-        return "Invalid username or password!", 401
+        # Kiểm tra trong bảng admin_users
+        admin_user = conn.execute(
+            'SELECT * FROM admin_users WHERE username = ? AND password = ?',
+            (username, password)
+        ).fetchone()
+
+        conn.close()
+
+        if branch_user:
+            session['username'] = username
+            session['role'] = 'Branch User'
+            session['branch_code'] = branch_user['branch_code']
+            return redirect(url_for('dashboard'))
+        elif admin_user:
+            session['username'] = username
+            session['role'] = 'Admin'
+            session['branch_code'] = None  # Admin không có branch_code
+            return redirect(url_for('dashboard'))
+        else:
+            return "Invalid username or password!", 401
 
     return render_template('login.html')
+
+
 
 # Route Dashboard: Hiển thị danh sách đơn hàng
 @app.route('/dashboard')
 def dashboard():
     if 'username' not in session:
         return redirect(url_for('login'))
-    
-    conn = get_db_connection()
-    if conn is None:
-        return "Database connection error", 500
 
-    orders = conn.execute('SELECT * FROM orders').fetchall()
+    conn = get_db_connection()
+    if session['role'] == "Branch User":
+        # Lọc đơn hàng theo branch_code cho Branch User
+        orders = conn.execute('SELECT * FROM orders WHERE branch_code = ?', (session['branch_code'],)).fetchall()
+    elif session['role'] == "Admin":
+        # Admin có thể xem tất cả đơn hàng
+        orders = conn.execute('SELECT * FROM orders').fetchall()
     conn.close()
 
     return render_template('dashboard.html', orders=orders)
 
+
 # Route xử lý đăng xuất
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
-    session.pop('role', None)
+    session.clear()  # Xóa toàn bộ session khi đăng xuất
     return redirect(url_for('login'))
 
 @app.route('/create', methods=['GET', 'POST'])
 def create_order():
-    if 'username' not in session:
+    if 'username' not in session or 'branch_code' not in session:
         return redirect(url_for('login'))
 
     if request.method == 'POST':
         customer = request.form['customer']
         product = request.form['product']
         status = request.form['status']
+        branch_code = session['branch_code']
         
         conn = get_db_connection()
-        if conn is None:
-            return "Database connection error", 500
-
-        conn.execute('INSERT INTO orders (customer, product, status) VALUES (?, ?, ?)',
-                     (customer, product, status))
-        conn.commit()
-        conn.close()
+        try:
+            conn.execute('INSERT INTO orders (customer, product, status, branch_code) VALUES (?, ?, ?, ?)',
+                        (customer, product, status, branch_code))
+            conn.commit()
+        finally:
+            conn.close()
 
         return redirect(url_for('dashboard'))
 
@@ -92,45 +108,54 @@ def create_order():
 
 @app.route('/edit/<int:order_id>', methods=['GET', 'POST'])
 def edit_order(order_id):
-    if 'username' not in session:
+    if 'username' not in session or 'branch_code' not in session:
         return redirect(url_for('login'))
 
     conn = get_db_connection()
-    if conn is None:
-        return "Database connection error", 500
+    try:
+        order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
 
-    order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
+        if not order:
+            return "Order not found", 404
 
-    if not order:
-        return "Order not found", 404
+        # Kiểm tra quyền sửa
+        if session['role'] == 'Branch User' and order['branch_code'] != session['branch_code']:
+            return "You do not have permission to edit this order", 403
 
-    if request.method == 'POST':
-        customer = request.form['customer']
-        product = request.form['product']
-        status = request.form['status']
-        
-        conn.execute('UPDATE orders SET customer = ?, product = ?, status = ? WHERE id = ?',
-                     (customer, product, status, order_id))
-        conn.commit()
+        if request.method == 'POST':
+            customer = request.form['customer']
+            product = request.form['product']
+            status = request.form['status']
+            
+            conn.execute('UPDATE orders SET customer = ?, product = ?, status = ? WHERE id = ?',
+                        (customer, product, status, order_id))
+            conn.commit()
+            return redirect(url_for('dashboard'))
+    finally:
         conn.close()
 
-        return redirect(url_for('dashboard'))
-
-    conn.close()
     return render_template('edit_order.html', order=order)
 
 @app.route('/delete/<int:order_id>', methods=['POST'])
 def delete_order(order_id):
-    if 'username' not in session:
+    if 'username' not in session or 'branch_code' not in session:
         return redirect(url_for('login'))
 
     conn = get_db_connection()
-    if conn is None:
-        return "Database connection error", 500
+    try:
+        order = conn.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
 
-    conn.execute('DELETE FROM orders WHERE id = ?', (order_id,))
-    conn.commit()
-    conn.close()
+        if not order:
+            return "Order not found", 404
+
+        # Kiểm tra quyền xóa
+        if session['role'] == 'Branch User' and order['branch_code'] != session['branch_code']:
+            return "You do not have permission to delete this order", 403
+
+        conn.execute('DELETE FROM orders WHERE id = ?', (order_id,))
+        conn.commit()
+    finally:
+        conn.close()
 
     return redirect(url_for('dashboard'))
 
