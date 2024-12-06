@@ -11,6 +11,19 @@
     <h2>Welcome {{ session['username'] }}!</h2>
     <p>Your role: {{ session['role'] }}</p>
 
+    <!-- Form Bộ Lọc Trạng Thái -->
+    <form method="GET" action="/dashboard" style="margin-bottom: 20px;">
+        <label for="status">Filter by Status:</label>
+        <select name="status" id="status">
+            <option value="">-- All Status --</option>
+            <option value="Pending" {% if request.args.get('status') == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Completed" {% if request.args.get('status') == 'Completed' %}selected{% endif %}>Completed</option>
+            <option value="Đang giao" {% if request.args.get('status') == 'Đang giao' %}selected{% endif %}>Đang giao</option>
+            <option value="Đổi trả" {% if request.args.get('status') == 'Đổi trả' %}selected{% endif %}>Đổi trả</option>
+        </select>
+        <button type="submit">Apply Filter</button>
+    </form>
+
     <h3>Order List</h3>
     <table border="1">
         <tr>
@@ -35,7 +48,8 @@
                     <select name="status" onchange="this.form.submit()">
                         <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
                         <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
-                        <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                        <option value="Đang giao" {% if order.status == 'Đang giao' %}selected{% endif %}>Đang giao</option>
+                        <option value="Đổi trả" {% if order.status == 'Đổi trả' %}selected{% endif %}>Đổi trả</option>
                     </select>
                 </form>
                 {% else %}

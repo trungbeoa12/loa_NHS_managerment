@@ -67,15 +67,37 @@ def dashboard():
         return redirect(url_for('login'))
 
     conn = get_db_connection()
+    status_filter = request.args.get('status', None)
+
+    # Kiểm tra role của người dùng
     if session['role'] == "Branch User":
         # Lọc đơn hàng theo branch_code cho Branch User
-        orders = conn.execute('SELECT * FROM orders WHERE branch_code = ?', (session['branch_code'],)).fetchall()
+        if status_filter:
+            orders = conn.execute(
+                'SELECT * FROM orders WHERE branch_code = ? AND status = ?',
+                (session['branch_code'], status_filter)
+            ).fetchall()
+        else:
+            orders = conn.execute(
+                'SELECT * FROM orders WHERE branch_code = ?',
+                (session['branch_code'],)
+            ).fetchall()
     elif session['role'] == "Admin":
-        # Admin có thể xem tất cả đơn hàng, bao gồm thông tin người tạo
-        orders = conn.execute('SELECT * FROM orders').fetchall()
-    conn.close()
+        # Admin có thể xem tất cả đơn hàng
+        if status_filter:
+            orders = conn.execute(
+                'SELECT * FROM orders WHERE status = ?',
+                (status_filter,)
+            ).fetchall()
+        else:
+            orders = conn.execute('SELECT * FROM orders').fetchall()
+    else:
+        # Nếu role không hợp lệ, chuyển hướng về trang đăng nhập
+        return redirect(url_for('login'))
 
+    conn.close()
     return render_template('dashboard.html', orders=orders)
+
 
 # Route xử lý đăng xuất
 @app.route('/logout')
@@ -180,6 +202,27 @@ def update_status(order_id):
 
     return redirect(url_for('dashboard'))
 
+@app.route('/branch_orders', methods=['GET'])
+def branch_orders():
+    if 'username' not in session or session['role'] != 'Branch User':
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    status_filter = request.args.get('status', None)
+
+    if status_filter:
+        orders = conn.execute(
+            'SELECT * FROM orders WHERE branch_code = ? AND status = ?',
+            (session['branch_code'], status_filter)
+        ).fetchall()
+    else:
+        orders = conn.execute(
+            'SELECT * FROM orders WHERE branch_code = ?',
+            (session['branch_code'],)
+        ).fetchall()
+
+    conn.close()
+    return render_template('branch_orders.html', orders=orders)
 
 
 # Chạy Flask server
