@@ -17,7 +17,10 @@
             <th>ID</th>
             <th>Customer</th>
             <th>Product</th>
-            <th>Status</th>
+            <th>Status</th> <!-- Sửa đúng vị trí cột -->
+            <th>Branch User</th>
+            <th>Created At</th>
+            <th>Updated At</th>
             <th>Actions</th>
         </tr>
         {% for order in orders %}
@@ -25,11 +28,28 @@
             <td>{{ order.id }}</td>
             <td>{{ order.customer }}</td>
             <td>{{ order.product }}</td>
-            <td>{{ order.status }}</td>
+            <td>
+                {% if session['role'] == 'Admin' %}
+                <!-- Admin có thể thay đổi trạng thái -->
+                <form method="POST" action="/update_status/{{ order.id }}" style="margin: 0;">
+                    <select name="status" onchange="this.form.submit()">
+                        <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Completed" {% if order.status == 'Completed' %}selected{% endif %}>Completed</option>
+                        <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </form>
+                {% else %}
+                <!-- Branch User chỉ xem trạng thái -->
+                {{ order.status }}
+                {% endif %}
+            </td>
+            <td>{{ order.created_by }}</td> <!-- Hiển thị đúng thông tin branch user -->
+            <td>{{ order.created_at }}</td> <!-- Hiển thị ngày tạo -->
+            <td>{{ order.updated_at }}</td> <!-- Hiển thị ngày cập nhật -->
             <td>
                 <a href="/edit/{{ order.id }}">Edit</a>
                 <form method="POST" action="/delete/{{ order.id }}" style="display:inline;">
-                  <button type="submit" onclick="return confirm('Are you sure you want to delete this order?');">Delete</button>
+                    <button type="submit" onclick="return confirm('Are you sure you want to delete this order?');">Delete</button>
                 </form>
             </td>
         </tr>

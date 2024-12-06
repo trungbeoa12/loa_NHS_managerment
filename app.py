@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
+from datetime import datetime
 
 # Hàm kết nối cơ sở dữ liệu
 def get_db_connection():
@@ -70,12 +71,11 @@ def dashboard():
         # Lọc đơn hàng theo branch_code cho Branch User
         orders = conn.execute('SELECT * FROM orders WHERE branch_code = ?', (session['branch_code'],)).fetchall()
     elif session['role'] == "Admin":
-        # Admin có thể xem tất cả đơn hàng
+        # Admin có thể xem tất cả đơn hàng, bao gồm thông tin người tạo
         orders = conn.execute('SELECT * FROM orders').fetchall()
     conn.close()
 
     return render_template('dashboard.html', orders=orders)
-
 
 # Route xử lý đăng xuất
 @app.route('/logout')
@@ -85,19 +85,21 @@ def logout():
 
 @app.route('/create', methods=['GET', 'POST'])
 def create_order():
-    if 'username' not in session or 'branch_code' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     if request.method == 'POST':
         customer = request.form['customer']
         product = request.form['product']
         status = request.form['status']
-        branch_code = session['branch_code']
-        
+        branch_code = session.get('branch_code', None)
+        created_by = session['username']  # Lấy thông tin user tạo đơn hàng
+        created_at = request.form.get('created_at', None) or datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
         conn = get_db_connection()
         try:
-            conn.execute('INSERT INTO orders (customer, product, status, branch_code) VALUES (?, ?, ?, ?)',
-                        (customer, product, status, branch_code))
+            conn.execute('INSERT INTO orders (customer, product, status, branch_code, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                         (customer, product, status, branch_code, created_by, created_at))
             conn.commit()
         finally:
             conn.close()
@@ -105,6 +107,8 @@ def create_order():
         return redirect(url_for('dashboard'))
 
     return render_template('create_order.html')
+
+
 
 @app.route('/edit/<int:order_id>', methods=['GET', 'POST'])
 def edit_order(order_id):
@@ -158,6 +162,25 @@ def delete_order(order_id):
         conn.close()
 
     return redirect(url_for('dashboard'))
+
+@app.route('/update_status/<int:order_id>', methods=['POST'])
+def update_status(order_id):
+    if 'username' not in session or session['role'] != 'Admin':
+        return redirect(url_for('login'))  # Chỉ admin mới được phép thay đổi
+
+    new_status = request.form['status']
+    updated_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Thời gian hiện tại
+
+    conn = get_db_connection()
+    try:
+        conn.execute('UPDATE orders SET status = ?, updated_at = ? WHERE id = ?', (new_status, updated_at, order_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+    return redirect(url_for('dashboard'))
+
+
 
 # Chạy Flask server
 if __name__ == '__main__':
