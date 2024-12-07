@@ -3,9 +3,12 @@ import sqlite3
 from datetime import datetime, timedelta
 
 # Hàm kết nối cơ sở dữ liệu
+import os
+
 def get_db_connection():
-    conn = sqlite3.connect('/home/trungdt2/Thuchanh/website-datloa/database/orders.db')
-    conn.row_factory = sqlite3.Row  # Trả về dữ liệu dạng dictionary
+    db_path = os.path.join(os.path.dirname(__file__), 'database', 'orders.db')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     return conn
 
 # Khởi tạo ứng dụng Flask
