@@ -3,19 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Sign Up</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('/static/images/theme.webp'); /* Ảnh nền */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .login-container {
+            background-color: rgba(255, 255, 255, 0.95); /* Nền trắng mờ */
+            padding: 30px;
+            border-radius: 15px; /* Bo góc mềm mại */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Đổ bóng */
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .login-container img {
+            margin-bottom: 20px;
+            width: 100px;
+            height: auto;
+        }
+
+        .login-container h3 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .login-container p {
+            font-size: 0.85rem;
+            color: #888; /* Màu chữ phụ sáng hơn */
+            margin-top: -10px;
+            margin-bottom: 20px;
+        }
+
+        .login-container p a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .login-container p a:hover {
+            text-decoration: underline;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #007bff, #0056b3); /* Gradient màu */
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px; /* Bo góc nút */
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #0056b3, #003d99); /* Gradient hover */
+            transform: scale(1.05); /* Phóng to nhẹ khi hover */
+        }
+    </style>
 </head>
 <body>
-    <h1>Login to Order Management</h1>
-    <form method="POST" action="/login">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
-        <br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        <br>
-        <button type="submit">Login</button>
-    </form>
+    <div class="login-container">
+        <!-- Logo -->
+        <img src="/static/images/Logo.webp" alt="Logo">
+        <!-- Tiêu đề -->
+        <h3>Sign Up for Smart Balance Speaker Alerts</h3>
+        <p>create by <a href="mailto:NHS@vietinbank.vn">NHS@vietinbank.vn</a></p>
+        <!-- Form -->
+        <form method="POST" action="/login">
+            <!-- Username -->
+            <div class="mb-3">
+                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+            <!-- Password -->
+            <div class="mb-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+            </div>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 
