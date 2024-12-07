@@ -5,26 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Order</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Bạn có thể thêm Bootstrap để cải thiện giao diện nếu muốn -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        a {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+    <script>
+        function toggleDeliveryTime() {
+            var status = document.getElementById('status').value;
+            var deliveryTimeField = document.getElementById('delivery_time_field');
+            if (status === 'Delivered') {
+                deliveryTimeField.style.display = 'block';
+            } else {
+                deliveryTimeField.style.display = 'none';
+                document.getElementById('delivery_time').value = '';
+            }
+        }
+
+        window.onload = function() {
+            toggleDeliveryTime();  // Gọi khi tải trang
+            document.getElementById('status').addEventListener('change', toggleDeliveryTime);
+        };
+    </script>
 </head>
 <body>
-    <h1>Edit Order</h1>
-    <form method="POST" action="/edit/{{ order.id }}">
+    <h1>Edit Order ID: {{ order['id'] }}</h1>
+    <form method="POST" action="/edit/{{ order['id'] }}">
+        <!-- Customer -->
         <label for="customer">Customer:</label>
-        <input type="text" id="customer" name="customer" value="{{ order.customer }}" required>
-        <br>
+        <input type="text" id="customer" name="customer" value="{{ order['customer'] }}" required>
+
+        <!-- Product -->
         <label for="product">Product:</label>
-        <input type="text" id="product" name="product" value="{{ order.product }}" required>
-        <br>
+        <input type="text" id="product" name="product" value="{{ order['product'] }}" required>
+
+        <!-- Status -->
         <label for="status">Status:</label>
-        <select id="status" name="status">
-            <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
-            <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
-            <option value="Delivered" {% if order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+        <select class="form-select" id="status" name="status" required {% if session['role'] == 'Branch User' %}disabled{% endif %}>
+            <option value="Pending" {% if order['status'] == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Shipped" {% if order['status'] == 'Shipped' %}selected{% endif %}>Shipped</option>
+            <option value="Delivered" {% if order['status'] == 'Delivered' %}selected{% endif %}>Delivered</option>
+            <option value="confirmed" {% if order['status'] == 'confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="Completed" {% if order['status'] == 'Completed' %}selected{% endif %}>Completed</option>
+            <option value="Đang giao" {% if order['status'] == 'Đang giao' %}selected{% endif %}>Đang giao</option>
+            <option value="Đổi trả" {% if order['status'] == 'Đổi trả' %}selected{% endif %}>Đổi trả</option>
+            <!-- Thêm các status khác nếu cần -->
         </select>
-        <br><br>
-        <button type="submit">Save Changes</button>
+        {% if session['role'] == 'Branch User' %}
+            <input type="hidden" name="status" value="{{ order['status'] }}">
+        {% endif %}
+
+        <!-- Customer Contact -->
+        <label for="customer_contact">Customer Contact:</label>
+        <input type="text" id="customer_contact" name="customer_contact" value="{{ order['customer_contact'] }}" required placeholder="e.g., 0987654321">
+
+        <!-- Delivery Time -->
+        <div id="delivery_time_field" style="display: none;">
+            <label for="delivery_time">Delivery Time:</label>
+            <input type="datetime-local" id="delivery_time" name="delivery_time" value="{{ order['delivery_time']|replace(' ', 'T') if order['delivery_time'] else '' }}">
+        </div>
+
+        <!-- SLA Status -->
+        <label for="sla_status">SLA Status:</label>
+        <input type="text" id="sla_status" name="sla_status" value="{{ order['sla_status'] }}" placeholder="e.g., On Time" required>
+
+        <!-- Submit Button -->
+        <button type="submit">Update Order</button>
     </form>
-    <br>
     <a href="/dashboard">Back to Dashboard</a>
 </body>
 </html>
